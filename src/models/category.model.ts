@@ -1,6 +1,6 @@
 import {Entity, model, property} from '@loopback/repository';
 
-@model({settings: {strict: false}})
+@model()
 export class Category extends Entity {
   @property({
     type: 'string',
@@ -18,7 +18,7 @@ export class Category extends Entity {
 
   @property({
     type: 'boolean',
-    required: false
+    required: false,
   })
   is_active?: boolean = true;
 
@@ -33,13 +33,6 @@ export class Category extends Entity {
     required: true
   })
   updated_at: Date;
-
-
-  // Define well-known properties here
-
-  // Indexer property to allow additional data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [prop: string]: any;
 
   constructor(data?: Partial<Category>) {
     super(data);

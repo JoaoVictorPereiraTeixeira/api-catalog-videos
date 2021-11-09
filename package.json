@@ -1,7 +1,7 @@
 {
   "name": "micro-catalog",
   "version": "0.0.1",
-  "description": "ms catalogo videos",
+  "description": "catalog microservice",
   "keywords": [
     "loopback-application",
     "loopback"
@@ -40,7 +40,7 @@
     "type": "git",
     "url": ""
   },
-  "author": "JoaoVictorPereiraTeixeira <joaovictorteixeira9819@gmail.com>",
+  "author": "Luis Daniel Assulfi <lassulfi@gmail.com>",
   "license": "",
   "files": [
     "README.md",
@@ -49,27 +49,27 @@
     "!*/__tests__"
   ],
   "dependencies": {
-    "@loopback/boot": "^3.3.1",
-    "@loopback/core": "^2.15.1",
-    "@loopback/repository": "^3.5.1",
-    "@loopback/rest": "^10.1.0",
-    "@loopback/rest-explorer": "^3.2.1",
-    "@loopback/service-proxy": "^3.1.1",
-    "@types/amqplib": "^0.8.2",
-    "ajv": "^8.6.3",
-    "amqplib": "^0.8.0",
+    "@loopback/boot": "^3.4.2",
+    "@loopback/core": "^2.16.2",
+    "@loopback/repository": "^3.7.1",
+    "@loopback/rest": "^10.0.0",
+    "@loopback/rest-explorer": "^3.3.2",
+    "@loopback/service-proxy": "^3.2.2",
+    "@types/amqplib": "^0.8.1",
+    "amqplib": "^0.5.6",
     "dotenv": "^10.0.0",
+    "es6": "npm:@elastic/elasticsearch@6",
     "loopback-connector-esv6": "https://github.com/codeedu/loopback-connector-elastic-search/tarball/master",
     "tslib": "^2.0.0"
   },
   "devDependencies": {
-    "@loopback/build": "^6.3.1",
+    "@loopback/build": "^7.0.0",
+    "@loopback/eslint-config": "^11.0.0",
+    "@loopback/testlab": "^3.4.2",
+    "@types/node": "^10.17.60",
+    "eslint": "^7.29.0",
     "source-map-support": "^0.5.19",
-    "@loopback/testlab": "^3.3.1",
-    "@types/node": "^10.17.56",
-    "@loopback/eslint-config": "^10.1.1",
-    "eslint": "^7.23.0",
-    "typescript": "~4.2.3"
+    "typescript": "~4.3.4"
   },
   "nodemonConfig": {
     "verbose": true,

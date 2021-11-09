@@ -1,4 +1,6 @@
+import 'dotenv/config';
 import datasource from './esv7.datasource.config.json';
+'use strict'
 
 export default {
     ...datasource,
@@ -8,9 +10,9 @@ export default {
     "debug": process.env.APP_ENV === 'dev',
     //"defaultSize": "",
     "configuration": {
-        "node": process.env.ELASTIC_SEARCH_HOST,
-        "requestTimeout": process.env.ELASTIC_SEARCH_REQUEST_TIMEOUT,
-        "pingTimeout": process.env.ELASTIC_SEARCH_PING_TIMEOUT
+        "node": process.env.ELASTICSEARCH_HOST,
+        "requestTimeout": process.env.ELASTICSEARCH_REQUEST_TIMEOUT,
+        "pingTimeout": process.env.ELASTICSEARCH_PING_TIMEOUT
     },
     "mappingProperties": {
         "docType": {

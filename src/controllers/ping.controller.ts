@@ -72,7 +72,6 @@ export class PingController {
     await this.categoryRepo.create({
       id: '2',
       name: 'minha primeira categoria',
-      description: 'minha descrição',
       created_at: new Date(),
       updated_at: new Date()
     })
