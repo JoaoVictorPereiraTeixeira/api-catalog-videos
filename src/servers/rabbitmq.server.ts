@@ -1,27 +1,28 @@
-import {Context} from '@loopback/context';
+import {Context, inject} from '@loopback/context';
 import {Server} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {Channel, connect, Connection, Replies} from 'amqplib';
+import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
+
 
 export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
   conn: Connection;
   channel: Channel;
 
-  constructor(@repository(CategoryRepository) private categoryRepo: CategoryRepository) {
+  constructor(
+    @repository(CategoryRepository) private categoryRepo: CategoryRepository,
+    @inject(RabbitmqBindings.CONFIG) private config: {uri:string}
+  ) {
     super();
-    console.log(this.categoryRepo);
+    console.log(config)
   }
 
 
   async start(): Promise<void> {
-    this.conn = await connect({
-      hostname: 'rabbitmq',
-      username: 'admin',
-      password: 'admin'
-    });
+    this.conn = await connect(this.config.uri);
     this._listening = true;
     this.boot();
   }
@@ -46,7 +47,11 @@ export class RabbitmqServer extends Context implements Server {
       const [model, event] = message.fields.routingKey.split('.').slice(1);
       this
         .sync({model, event, data})
-        .then(() => this.channel.ack(message));
+        .then(() => this.channel.ack(message))
+        .catch((err) => {
+          console.log(err)
+          this.channel.reject(message,false)
+        })
       console.log(model, event);
     });
   }
@@ -57,9 +62,15 @@ export class RabbitmqServer extends Context implements Server {
         case 'created':
           await this.categoryRepo.create({
             ...data,
-            created_at: new Date(),
-            updated_at: new Date(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
+          break;
+        case 'updated':
+          await this.categoryRepo.updateById(data.id, data)
+          break;
+        case 'deleted':
+          await this.categoryRepo.deleteById(data.id);
           break;
         default:
           break;
