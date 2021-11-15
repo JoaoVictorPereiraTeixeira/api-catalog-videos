@@ -1,20 +1,28 @@
 import {Context, inject} from '@loopback/context';
 import {Server} from '@loopback/core';
 import {repository} from '@loopback/repository';
-import {Channel, connect, Connection, Replies} from 'amqplib';
+import {AmqpConnectionManager, AmqpConnectionManagerOptions, ChannelWrapper, connect} from 'amqp-connection-manager';
+import {Channel, Replies} from 'amqplib';
 import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
 
 
+export interface RabbitmqConfig {
+  uri: string
+  connOptions?: AmqpConnectionManagerOptions
+}
+
 export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
-  conn: Connection;
+  private _conn: AmqpConnectionManager;
+  private _channelManager: ChannelWrapper
+
   channel: Channel;
 
   constructor(
     @repository(CategoryRepository) private categoryRepo: CategoryRepository,
-    @inject(RabbitmqBindings.CONFIG) private config: {uri:string}
+    @inject(RabbitmqBindings.CONFIG) private config: RabbitmqConfig
   ) {
     super();
     console.log(config)
@@ -22,12 +30,23 @@ export class RabbitmqServer extends Context implements Server {
 
 
   async start(): Promise<void> {
-    this.conn = await connect(this.config.uri);
-    this._listening = true;
-    this.boot();
+    this._conn = connect([this.config.uri], this.config.connOptions);
+    this._channelManager =  this.conn.createChannel();
+    this._channelManager.on('connect', () =>  {
+      this._listening = true
+      console.log('Successfully connected a RabbitMQ channel')
+    })
+
+    this._channelManager.on('error', (err, {name}) =>  {
+      this._listening = false
+      console.log(`Failed to setup a RabbitMQ channel - name: ${name} | error: ${err.message}`)
+    })
+
+    // this.boot();
   }
 
   async boot() {
+    // @ts-ignore
     this.channel = await this.conn.createChannel();
 
     const queue: Replies.AssertQueue =
@@ -85,5 +104,9 @@ export class RabbitmqServer extends Context implements Server {
 
   get listening(): boolean {
     return this._listening;
+  }
+
+  get conn(): AmqpConnectionManager {
+    return this._conn;
   }
 }
