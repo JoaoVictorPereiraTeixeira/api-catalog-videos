@@ -2,7 +2,7 @@ import {Context, inject} from '@loopback/context';
 import {Server} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {AmqpConnectionManager, AmqpConnectionManagerOptions, ChannelWrapper, connect} from 'amqp-connection-manager';
-import {Channel, Replies} from 'amqplib';
+import {Channel, ConfirmChannel, Options, Replies} from 'amqplib';
 import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
@@ -11,6 +11,7 @@ import {CategoryRepository} from '../repositories';
 export interface RabbitmqConfig {
   uri: string
   connOptions?: AmqpConnectionManagerOptions
+  exchanges?:{name: string, type: string, options?: Options.AssertExchange}[]
 }
 
 export class RabbitmqServer extends Context implements Server {
@@ -32,17 +33,31 @@ export class RabbitmqServer extends Context implements Server {
   async start(): Promise<void> {
     this._conn = connect([this.config.uri], this.config.connOptions);
     this._channelManager =  this.conn.createChannel();
-    this._channelManager.on('connect', () =>  {
+    this.channelManager.on('connect', () =>  {
       this._listening = true
       console.log('Successfully connected a RabbitMQ channel')
     })
 
-    this._channelManager.on('error', (err, {name}) =>  {
+    this.channelManager.on('error', (err, {name}) =>  {
       this._listening = false
       console.log(`Failed to setup a RabbitMQ channel - name: ${name} | error: ${err.message}`)
     })
 
+    await this.setupExchanges()
+
     // this.boot();
+  }
+
+  private async setupExchanges(){
+    return this.channelManager.addSetup(async (channel: ConfirmChannel) => {
+      if(!this.config.exchanges){
+        return
+      }
+
+      await Promise.all(this.config.exchanges.map((exchange) => {
+        channel.assertExchange(exchange.name, exchange.type, exchange.options)
+      }))
+    })
   }
 
   async boot() {
@@ -108,5 +123,9 @@ export class RabbitmqServer extends Context implements Server {
 
   get conn(): AmqpConnectionManager {
     return this._conn;
+  }
+
+  get channelManager(): ChannelWrapper {
+    return this._channelManager;
   }
 }
