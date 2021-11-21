@@ -1,4 +1,4 @@
-import {Context, inject} from '@loopback/context';
+import {Binding, Context, inject} from '@loopback/context';
 import {Application, CoreBindings, Server} from '@loopback/core';
 import {MetadataInspector} from '@loopback/metadata';
 import {repository} from '@loopback/repository';
@@ -8,7 +8,7 @@ import {RabbitmqSubscribeMetadata, RABBITMQ_SUBSCRIBE_DECORATOR} from '../decora
 import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
-import {CategorySyncService} from '../services';
+
 
 
 export interface RabbitmqConfig {
@@ -33,7 +33,6 @@ export class RabbitmqServer extends Context implements Server {
     console.log(config)
   }
 
-
   async start(): Promise<void> {
     this._conn = connect([this.config.uri], this.config.connOptions);
     this._channelManager =  this.conn.createChannel();
@@ -48,11 +47,9 @@ export class RabbitmqServer extends Context implements Server {
     })
 
     await this.setupExchanges()
-    const service = this.getSync<CategorySyncService>('services.CategorySyncService')
-    const metadata = MetadataInspector.getAllMethodMetadata<RabbitmqSubscribeMetadata>(
-      RABBITMQ_SUBSCRIBE_DECORATOR, service
-    )
-    console.log(metadata)
+
+    // @ts-ignore
+    console.log(this.getSubscribers()[0][0]['method']())
     // this.boot();
   }
 
@@ -66,6 +63,56 @@ export class RabbitmqServer extends Context implements Server {
         channel.assertExchange(exchange.name, exchange.type, exchange.options)
       }))
     })
+  }
+
+  private getSubscribers(){
+    const bindings: Array<Readonly<Binding>> = this.find('services.*')
+
+    return bindings.map(
+      binding => {
+        const metadata = MetadataInspector.getAllMethodMetadata<RabbitmqSubscribeMetadata>(
+          RABBITMQ_SUBSCRIBE_DECORATOR, binding.valueConstructor?.prototype
+        )
+
+        if(!metadata){
+          return []
+        }
+
+        const methods = [];
+
+        for(const methodName in metadata){
+
+          if(!Object.prototype.hasOwnProperty.call(metadata, methodName)){
+            return;
+          }
+
+          const service = this.getSync(binding.key) as any;
+
+          methods.push({
+            method: service[methodName].bind(service),
+            metadata: metadata[methodName]
+          })
+        }
+
+        console.log(".............. binding")
+        console.log(binding)
+
+        console.log(".............. metadata")
+        console.log(metadata)
+
+        console.log(".............. methods")
+        console.log(methods)
+
+        return methods
+      }
+    )
+
+
+    // const service = this.getSync<CategorySyncService>('services.CategorySyncService')
+    // const metadata = MetadataInspector.getAllMethodMetadata<RabbitmqSubscribeMetadata>(
+    //   RABBITMQ_SUBSCRIBE_DECORATOR, service
+    // )
+    // console.log(metadata)
   }
 
   async boot() {
