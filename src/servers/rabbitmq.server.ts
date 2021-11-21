@@ -3,13 +3,10 @@ import {Application, CoreBindings, Server} from '@loopback/core';
 import {MetadataInspector} from '@loopback/metadata';
 import {repository} from '@loopback/repository';
 import {AmqpConnectionManager, AmqpConnectionManagerOptions, ChannelWrapper, connect} from 'amqp-connection-manager';
-import {Channel, ConfirmChannel, Options, Replies} from 'amqplib';
+import {Channel, ConfirmChannel, Options} from 'amqplib';
 import {RabbitmqSubscribeMetadata, RABBITMQ_SUBSCRIBE_DECORATOR} from '../decorators/rabbitmq-subscribe.decorator';
 import {RabbitmqBindings} from '../keys';
-import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
-
-
 
 export interface RabbitmqConfig {
   uri: string
@@ -30,7 +27,6 @@ export class RabbitmqServer extends Context implements Server {
     @inject(RabbitmqBindings.CONFIG) private config: RabbitmqConfig
   ) {
     super(app);
-    console.log(config)
   }
 
   async start(): Promise<void> {
@@ -128,60 +124,41 @@ export class RabbitmqServer extends Context implements Server {
           await Promise.all(
             routingKeys.map((x) => channel.bindQueue(assertQueue.queue, exchange, x))
           )
+
+          await this.consume({
+            channel,
+            queue: assertQueue.queue,
+            method: item.method
+          });
         });
       })
+
   }
 
-  async boot() {
-    // @ts-ignore
-    this.channel = await this.conn.createChannel();
+  private async consume({channel, queue, method}: {channel: ConfirmChannel, queue: string, method: Function}){
+    await channel.consume(queue, async message => {
+      try{
+        if(!message){
+          throw new Error('Received null message');
+        }
 
-    const queue: Replies.AssertQueue =
-      await this.channel.assertQueue('micro-catalog/sync-videos');
-
-    const exchange: Replies.AssertExchange =
-      await this.channel.assertExchange('amq.topic', 'topic');
-
-    await this.channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
-
-    await this.channel.consume(queue.queue, (message) => {
-      if (!message) {
-        return;
+        const content = message.content;
+        if(content){
+          let data;
+          try{
+            data = JSON.parse(content.toString())
+          }catch(e){
+            data = null;
+          }
+          console.log(data);
+         await method({data, message, channel})
+         channel.ack(message)
+        }
+      } catch (e){
+        console.error(e);
+        //definir politica de resposta
       }
-
-      const data = JSON.parse(message.content.toString());
-      const [model, event] = message.fields.routingKey.split('.').slice(1);
-      this
-        .sync({model, event, data})
-        .then(() => this.channel.ack(message))
-        .catch((err) => {
-          console.log(err)
-          this.channel.reject(message,false)
-        })
-      console.log(model, event);
-    });
-  }
-
-  async sync({model, event, data}: {model: string, event: string, data: Category}) {
-    if (model === 'category') {
-      switch (event) {
-        case 'created':
-          await this.categoryRepo.create({
-            ...data,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-          break;
-        case 'updated':
-          await this.categoryRepo.updateById(data.id, data)
-          break;
-        case 'deleted':
-          await this.categoryRepo.deleteById(data.id);
-          break;
-        default:
-          break;
-      }
-    }
+    })
   }
 
   async stop(): Promise<void> {
