@@ -14,39 +14,57 @@ export default {
         "requestTimeout": process.env.ELASTICSEARCH_REQUEST_TIMEOUT,
         "pingTimeout": process.env.ELASTICSEARCH_PING_TIMEOUT
     },
-    "mappingProperties": {
-        "docType": {
-            "type": "keyword"
+    mappingProperties: {
+        docType: {
+            type: 'keyword',
         },
-        "id": {
-            "type": "keyword",
-            "fields": {
-                "keyword": {
-                    "type": "keyword",
-                    "ignore_above": 256
-                }
-            }
+        id: {
+            type: 'keyword',
         },
-        "name": {
-            "type": "text",
-            "fields": {
-                "keyword": {
-                    "type": "keyword",
-                    "ignore_above": 256
-                }
-            }
+        name: {
+            type: 'text', //analisado
+            analyzer: 'ngram_token_analyzer',
+            search_analyzer: 'ngram_token_analyzer',
+            fields: {
+            keyword: {
+                type: 'keyword',
+                ignore_above: 256,
+            },
+            },
         },
-        "description": {
-            "type": "text"
+        description: {
+            type: 'text', //analisado
+            analyzer: 'ngram_token_analyzer',
+            search_analyzer: 'ngram_token_analyzer',
         },
-        "is_active": {
-            "type": "boolean"
+        type: {
+            type: 'byte',
         },
-        "created_at": {
-            "type": "date"
+        is_active: {
+            type: 'boolean',
         },
-        "updated_at": {
-            "type": "date"
+        created_at: {
+            type: 'date',
         },
+        updated_at: {
+            type: 'date',
+        },
+        categories: {
+            type: 'nested',
+            properties: {
+                id: {type: 'keyword'},
+                name: {
+                    type: 'text',
+                    fields: {
+                    keyword: {
+                        type: 'keyword',
+                        ignore_above: 256,
+                    },
+                    },
+                },
+                is_active: {type: 'boolean'}
+            },
+        }
     }
 }
+
