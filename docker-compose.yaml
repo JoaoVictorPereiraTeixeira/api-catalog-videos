@@ -4,7 +4,7 @@ services:
   app:
     build: .
     entrypoint: ./.docker/entrypoint.sh
-    container_name: micro-catalog-app
+    container_name: api-catalog-app
     ports:
       - 3001:3000
     environment:

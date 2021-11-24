@@ -68,6 +68,34 @@ export class RabbitmqServer extends Context implements Server {
     })
   }
 
+
+  private async bindSubscribers(){
+    this
+      .getSubscribers()
+      .map(async (item: any) => {
+        await this.channelManager.addSetup(async (channel: ConfirmChannel) => {
+          const {exchange, queue, routingKey, queueOptions} = item.metadata;
+          const assertQueue = await channel.assertQueue(
+            queue ?? '',
+            queueOptions ?? undefined
+          )
+
+          const routingKeys = Array.isArray(routingKey) ? routingKey : [routingKey];
+
+          await Promise.all(
+            routingKeys.map((x) => channel.bindQueue(assertQueue.queue, exchange, x))
+          )
+
+          await this.consume({
+            channel,
+            queue: assertQueue.queue,
+            method: item.method
+          });
+        });
+      })
+
+  }
+
   private getSubscribers(): {method: Function, metadata: RabbitmqSubscribeMetadata}[]{
     const bindings: Array<Readonly<Binding>> = this.find('services.*')
 
@@ -113,33 +141,6 @@ export class RabbitmqServer extends Context implements Server {
         collection.push(...item);
         return collection
       }, [])
-
-  }
-
-  private async bindSubscribers(){
-    this
-      .getSubscribers()
-      .map(async (item: any) => {
-        await this.channelManager.addSetup(async (channel: ConfirmChannel) => {
-          const {exchange, queue, routingKey, queueOptions} = item.metadata;
-          const assertQueue = await channel.assertQueue(
-            queue ?? '',
-            queueOptions ?? undefined
-          )
-
-          const routingKeys = Array.isArray(routingKey) ? routingKey : [routingKey];
-
-          await Promise.all(
-            routingKeys.map((x) => channel.bindQueue(assertQueue.queue, exchange, x))
-          )
-
-          await this.consume({
-            channel,
-            queue: assertQueue.queue,
-            method: item.method
-          });
-        });
-      })
 
   }
 
