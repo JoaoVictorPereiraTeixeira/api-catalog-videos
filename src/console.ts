@@ -1,5 +1,7 @@
 import {default as chalk} from 'chalk';
+import './bootstrap';
 import * as commands from './commands';
+
 
 const command = process.argv[2] || null;
 console.log(commands)
