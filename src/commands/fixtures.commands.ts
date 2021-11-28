@@ -1,8 +1,10 @@
+import {DefaultCrudRepository} from '@loopback/repository';
 import {default as chalk} from 'chalk';
 import {Client} from 'es6';
 import {MicroCatalogApplication} from '..';
 import * as config from '../../config';
 import {Esv7DataSource} from '../datasources';
+import fixtures from '../fixtures';
 
 export class FixtureCommands {
   static command = 'fixtures';
@@ -14,6 +16,13 @@ export class FixtureCommands {
     await this.bootApp()
     console.log(chalk.green('Delete all documents'))
     await this.deleteAllDocuments()
+
+    for(const fixture of fixtures){
+      const repository = this.getRepository<DefaultCrudRepository<any,any>>(fixture.model)
+      await repository.create(fixture.fields);
+    }
+
+    console.log(chalk.green('Documents generated'))
   }
 
   private async bootApp(){
@@ -33,5 +42,9 @@ export class FixtureCommands {
         query: {match_all: {}}
       }
     })
+  }
+
+  private getRepository<T>(modelName: string): T{
+    return this.app.getSync(`repositories.${modelName}Repository`)
   }
 }
