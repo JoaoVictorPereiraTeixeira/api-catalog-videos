@@ -71,6 +71,8 @@ export class RabbitmqServer extends Context implements Server {
   private getSubscribers(): {method: Function, metadata: RabbitmqSubscribeMetadata}[]{
     const bindings: Array<Readonly<Binding>> = this.find('services.*')
 
+    // console.dir(bindings, {depth: 8});
+
     return bindings
       .map(
         binding => {

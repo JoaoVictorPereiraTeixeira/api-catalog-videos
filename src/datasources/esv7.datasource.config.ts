@@ -23,19 +23,15 @@ export default {
         },
         name: {
             type: 'text', //analisado
-            analyzer: 'ngram_token_analyzer',
-            search_analyzer: 'ngram_token_analyzer',
             fields: {
-            keyword: {
-                type: 'keyword',
-                ignore_above: 256,
-            },
+                keyword: {
+                    type: 'keyword',
+                    ignore_above: 256,
+                },
             },
         },
         description: {
             type: 'text', //analisado
-            analyzer: 'ngram_token_analyzer',
-            search_analyzer: 'ngram_token_analyzer',
         },
         type: {
             type: 'byte',
@@ -56,10 +52,10 @@ export default {
                 name: {
                     type: 'text',
                     fields: {
-                    keyword: {
-                        type: 'keyword',
-                        ignore_above: 256,
-                    },
+                        keyword: {
+                            type: 'keyword',
+                            ignore_above: 256,
+                        },
                     },
                 },
                 is_active: {type: 'boolean'}
