@@ -21,24 +21,10 @@ export class CategorySyncService extends BaseModelSyncService {
     routingKey: 'model.category.*'
   })
   async handler({data,message}:{data: any, message: Message}){
-    console.log("DATA:   ===============")
-    console.log(data);
-
-    console.log("message: ==============")
-    console.log(message);
-  }
-
-  @rabbitmqSubscribe({
-    exchange: 'amq.topic',
-    queue: 'micro-catalog/sync-videos/testandoautomatico',
-    routingKey: 'model.category.banana.*'
-  })
-  async handler2({data,message}:{data: any, message: Message}){
-    console.log("DATA: ==============")
-    console.log(data)
-
-
-    console.log("message: ==============")
-    console.log(message)
+    await this.sync({
+      repo: this.repo,
+      data,
+      message
+    })
   }
 }

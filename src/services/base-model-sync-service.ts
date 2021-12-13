@@ -1,4 +1,4 @@
-import {DefaultCrudRepository} from '@loopback/repository';
+import {DefaultCrudRepository, EntityNotFoundError} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {pick} from 'lodash';
 import {ValidatorService} from './validator.service';
@@ -7,6 +7,14 @@ interface SyncOptions {
   repo: DefaultCrudRepository<any, any>;
   data: any;
   message: Message
+}
+
+export interface SyncRelationOptions{
+  id: string;
+  relation: string;
+  relationIds: string[];
+  repoRelation: DefaultCrudRepository<any,any>;
+  repo: DefaultCrudRepository<any,any>;
 }
 
 export abstract class BaseModelSyncService {
@@ -24,10 +32,10 @@ export abstract class BaseModelSyncService {
 
     switch(action){
       case 'created':
-        await this.validateService.validate({
-          data: entity,
-          entityClass: repo.entityClass
-        })
+        // await this.validateService.validate({
+        //   data: entity,
+        //   entityClass: repo.entityClass
+        // })
         await repo.create(entity);
         break;
       case 'updated':
@@ -57,12 +65,33 @@ export abstract class BaseModelSyncService {
     return exists ? repo.updateById(id, entity) : repo.create(entity)
   }
 
-  async syncRelations({id, relationIds, repoRelation}: {id: string; relationIds: string[]; repoRelation: DefaultCrudRepository<any,any>; message: Message}){
+
+  async syncRelations({id, relation, relationIds, repoRelation, repo}: SyncRelationOptions){
+    const fieldsRelation = this.extractFieldsRelation(repo, relation)
+
     let collection = await repoRelation.find({
       where:{
         or: relationIds.map(relationId => ({id: relationId}))
-      }
+      },
+      fields: fieldsRelation
     })
+
+    if(!collection.length){
+      const error = new EntityNotFoundError(repoRelation.entityClass, relationIds);
+      error.name = 'EntityNotFound';
+      throw error;
+    }
+
+    await (repo as any).attachCategories(id, collection)
+
     console.log(collection)
+  }
+  protected extractFieldsRelation(repo: DefaultCrudRepository<any,any>, relation: string){
+    return Object.keys(
+      repo.modelClass.definition.properties[relation].jsonSchema.items.properties
+    ).reduce((obj:any , field: string) => {
+      obj[field] = true
+      return obj
+    },{});
   }
 }
