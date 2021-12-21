@@ -1,6 +1,8 @@
 import {Entity, model, property} from '@loopback/repository';
+import {
+  getModelSchemaRef
+} from '@loopback/rest';
 import {SmallCategory} from '.';
-
 
 @model()
 export class Genre extends Entity {
@@ -45,7 +47,7 @@ export class Genre extends Entity {
     jsonSchema: {
       type: 'array',
       items: {
-        type: 'object',
+        type: 'object', //sobrescrever o object
         properties: {
           id: {
             type: 'string'
@@ -58,7 +60,7 @@ export class Genre extends Entity {
           }
         }
       },
-      uniqueItems:true
+      uniqueItems:true //invalida objetos com valores iguais
     }
   })
   categories: SmallCategory;
@@ -73,4 +75,6 @@ export interface GenreRelations {
 }
 
 export type GenreWithRelations = Genre & GenreRelations;
-// console.dir(getModelSchemaRef(Genre), {depth: 8})
+console.dir(getModelSchemaRef(Genre), {depth: 8})
+
+

@@ -57,20 +57,19 @@ export abstract class BaseModelSyncService {
 
   protected async updateOrCreate({repo, id, entity}: {repo: DefaultCrudRepository<any,any>, id: string, entity: any}){
     const exists = await repo.exists(id)
-    await this.validateService.validate({
-      data: entity,
-      entityClass: repo.entityClass,
-      ...(exists && {options:{partial: true}})
-    })
+    // await this.validateService.validate({
+    //   data: entity,
+    //   entityClass: repo.entityClass,
+    //   ...(exists && {options:{partial: true}})
+    // })
     return exists ? repo.updateById(id, entity) : repo.create(entity)
   }
-
 
   async syncRelations({id, relation, relationIds, repoRelation, repo}: SyncRelationOptions){
     const fieldsRelation = this.extractFieldsRelation(repo, relation)
 
     let collection = await repoRelation.find({
-      where:{
+      where:{ //buscar todas as categorias
         or: relationIds.map(relationId => ({id: relationId}))
       },
       fields: fieldsRelation
@@ -82,10 +81,14 @@ export abstract class BaseModelSyncService {
       throw error;
     }
 
+    //logar o fieldsRelation e collection - menos dados -
+
+    // await repo.updateById(id, {[relation]: collection})
     await (repo as any).attachCategories(id, collection)
 
     console.log(collection)
   }
+
   protected extractFieldsRelation(repo: DefaultCrudRepository<any,any>, relation: string){
     return Object.keys(
       repo.modelClass.definition.properties[relation].jsonSchema.items.properties

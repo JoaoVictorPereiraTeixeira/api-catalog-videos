@@ -2,9 +2,9 @@ import {default as chalk} from 'chalk';
 import './bootstrap';
 import * as commands from './commands';
 
+console.log(commands)
 
 const command = process.argv[2] || null;
-console.log(commands)
 if(!command){
   showAvailableCommands()
 }
