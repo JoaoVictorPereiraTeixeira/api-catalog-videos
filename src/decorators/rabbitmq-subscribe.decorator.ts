@@ -5,7 +5,7 @@ export interface RabbitmqSubscribeMetadata {
   exchange: string;
   routingKey: string | string[];
   queue?: string;
-  options?: Options.AssertQueue
+  queueOptions?: Options.AssertQueue
 }
 
 export const RABBITMQ_SUBSCRIBE_DECORATOR = 'rabbitmq-subscribe-metadata'
