@@ -26,13 +26,13 @@ module.exports = {
     queues:[
       {
         name: 'dlx.sync-videos',
-        exchange: {
-          name: 'dlx.amq.topic',
-          routingKey: "model.category.*",
-        },
         options: {
           deadLetterExchange: 'amq.topic',
           messageTtl: 20000
+        },
+        exchange: {
+          name: 'dlx.amq.topic',
+          routingKey: "model.*.*",
         }
       }
     ]

@@ -31,6 +31,7 @@ export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
   private _conn: AmqpConnectionManager;
   private _channelManager: ChannelWrapper
+  private maxAttempts = 3;
 
   channel: Channel;
 
@@ -189,7 +190,11 @@ export class RabbitmqServer extends Context implements Server {
           this.dispatchResponse(channel, message, responseType)
         }
       } catch (e){
-        console.error(e);
+        console.error(e, {
+          routingKey: message?.properties.headers['x-death']![0]['routing-keys'],
+          content: message?.content.toString()
+        });
+
         if(!message){
           return;
         }
@@ -204,12 +209,37 @@ export class RabbitmqServer extends Context implements Server {
         channel.nack(message, false, true)
         break;
       case ResponseEnum.NACK:
-        channel.nack(message, false, false)
+        this.handleNack({channel, message})
         break;
       case ResponseEnum.ACK:
       default:
         channel.ack(message)
     }
+  }
+
+  handleNack({channel, message}: {channel: Channel, message: Message}){
+    const canDeadLetter = this.canDeadLetter({channel, message});
+    if(canDeadLetter){
+      console.log("Nack in message", {content: message.content.toString()})
+      channel.nack(message, false, false)
+    } else {
+      channel.ack(message)
+    }
+  }
+
+  canDeadLetter({channel, message}: {channel: Channel, message: Message}){
+    if(message.properties.headers && 'x-death' in message.properties.headers){
+      const count = message.properties.headers['x-death']![0].count;
+      if(count >= this.maxAttempts){
+        channel.ack(message);
+        const queue = message.properties.headers['x-death']![0].queue;
+        console.error(
+          `Ack in ${queue} with error. Max attempts exceeded: ${this.maxAttempts}`
+        )
+        return false;
+      }
+    }
+    return true;
   }
 
   async stop(): Promise<void> {
