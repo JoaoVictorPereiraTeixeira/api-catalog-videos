@@ -48,18 +48,18 @@ export class MicroCatalogApplication extends BootMixin(
     this.server(RabbitmqServer);
   }
 
-  async boot(){
-    await super.boot();
+  // async boot(){
+  //   await super.boot();
 
-    const categoryRepo = this.getSync('repositories.CategoryRepository')
+    // const categoryRepo = this.getSync('repositories.CategoryRepository')
 
-    //@ts-ignore
-    const category = await categoryRepo.find({where: {id: '1-cat'}})
-    //@ts-ignore
-    categoryRepo.updateById(category[0].id, {
-      ...category[0],
-      name: 'Funcionando no loopback teste'
-    })
+    // //@ts-ignore
+    // const category = await categoryRepo.find({where: {id: '1-cat'}})
+    // //@ts-ignore
+    // categoryRepo.updateById(category[0].id, {
+    //   ...category[0],
+    //   name: 'Funcionando no loopback teste'
+    // })
 
     // const genreRepo = this.getSync('repositories.GenreRepository')
     // //@ts-ignore
@@ -80,6 +80,6 @@ export class MicroCatalogApplication extends BootMixin(
     // }catch(e){
     //   console.dir(e, {depth: 8})
     // }
-  }
+  // }
 
 }

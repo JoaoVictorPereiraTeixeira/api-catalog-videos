@@ -60,7 +60,6 @@ export class RabbitmqServer extends Context implements Server {
     await this.setupQueues();
     await this.bindSubscribers();
 
-    // this.boot();
   }
 
   private async setupExchanges(){
